@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getWorkouts } from '../redux/workoutSlice';
+import { getWorkouts, deleteWorkout } from '../redux/workoutSlice';
 
 export default function WorkoutList() {
   const dispatch = useDispatch(); // send "actions" to the store
@@ -20,6 +20,9 @@ export default function WorkoutList() {
         {workouts.map((w) => (
           <li key={w.id}>
             {w.name} - {w.date}
+            <button onClick={() => dispatch(deleteWorkout(w.id))}>
+              ❌ Delete
+            </button>
           </li>
         ))}
       </ul>

@@ -19,8 +19,8 @@ function App() {
   return (
     <div>
       <h1>PeakForm Workouts</h1>
-      <WorkoutList />
       <WorkoutForm />
+      <WorkoutList />
     </div>
   );
 }

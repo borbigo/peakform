@@ -1,57 +1,45 @@
-from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
+# backend/app.py
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+from extensions import db
+from models import Workout
 from datetime import datetime
 import os
 
-# -------------------
-# App & DB Setup
-# -------------------
 app = Flask(__name__)
 CORS(app)
 
-# SQLite database location
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'instance', 'peakform.db')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///peakform.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
+db.init_app(app)
 
-# -------------------
-# Routes
-# -------------------
-@app.route('/workouts', methods=['GET'])
-def get_workouts():
-    from models import Workout  # Import here to avoid circular import
-    workouts = Workout.query.all()
-    workouts_list = [
-        {"id": w.id, "name": w.name, "date": w.date.strftime("%Y-%m-%d") if w.date else None}
-        for w in workouts
-    ]
-    return jsonify(workouts_list)
-
-
-@app.route('/workouts', methods=['POST'])
-def add_workout():
-    from models import Workout  # Import here to avoid circular import
-    data = request.get_json()
-    name = data.get('name')
-    date_str = data.get('date') # this is a string from the frontend
-    
-    # convert string to python date object
-    date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
-    
-    w = Workout(name=name, date=date_obj)
-    db.session.add(w)
-    db.session.commit()
-    
-    return jsonify({'id': w.id, 'name': w.name, 'date': w.date.isoformat()})
-
-# -------------------
-# Run
-# -------------------
-if __name__ == '__main__':
-    # Ensure instance folder exists
-    os.makedirs(os.path.join(basedir, 'instance'), exist_ok=True)
+with app.app_context():
     db.create_all()
-    app.run(debug=True)
+
+@app.route("/workouts", methods=["GET"])
+def get_workouts():
+    workouts = Workout.query.all()
+    return jsonify([w.to_dict() for w in workouts])
+
+@app.route("/workouts", methods=["POST"])
+def add_workout():
+    data = request.json
+    
+    # convert date string -> Python date object
+    workout_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+    
+    new_workout = Workout(
+        name=data['name'],
+        date=workout_date
+    )
+    db.session.add(new_workout)
+    db.session.commit()
+    return jsonify(new_workout.to_dict()), 201
+
+@app.route("/workouts/<int:id>", methods=["DELETE"])
+def delete_workout(id):
+    workout = Workout.query.get_or_404(id)
+    db.session.delete(workout)
+    db.session.commit()
+    return jsonify({"message": "Workout deleted"})
