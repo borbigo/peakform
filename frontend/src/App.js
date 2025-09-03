@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setWorkouts } from './redux/workoutSlice';
+import WorkoutList from './components/WorkoutList';
+import WorkoutForm from './components/WorkoutForm';
 
 function App() {
   const dispatch = useDispatch();
@@ -17,9 +19,8 @@ function App() {
   return (
     <div>
       <h1>PeakForm Workouts</h1>
-      {workouts.map(w => (
-        <div key={w.id}>{w.name} — {w.date}</div>
-      ))}
+      <WorkoutList />
+      <WorkoutForm />
     </div>
   );
 }
