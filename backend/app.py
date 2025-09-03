@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from datetime import datetime
 import os
 
 # -------------------
@@ -34,10 +35,17 @@ def get_workouts():
 def add_workout():
     from models import Workout  # Import here to avoid circular import
     data = request.get_json()
-    new_workout = Workout(name=data['name'], date=data['date'])
-    db.session.add(new_workout)
+    name = data.get('name')
+    date_str = data.get('date') # this is a string from the frontend
+    
+    # convert string to python date object
+    date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+    
+    w = Workout(name=name, date=date_obj)
+    db.session.add(w)
     db.session.commit()
-    return jsonify({"message": "Workout added!", "id": new_workout.id}), 201
+    
+    return jsonify({'id': w.id, 'name': w.name, 'date': w.date.isoformat()})
 
 # -------------------
 # Run
